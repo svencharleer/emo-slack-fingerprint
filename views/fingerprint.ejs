@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <!--
+  // Emotional Fingerprint, a simple sentiment visualisation for Slack.
+  // created by
+  // Sven Charleer - @svencharleer svencharleer.com
+-->
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <script type="application/javascript" src="/bower_components/jquery/dist/jquery.js"></script>
+    <script type="application/javascript" src="/bower_components/crossfilter/crossfilter.js"></script>
+    <script type="application/javascript" src="/bower_components/d3/d3.js"></script>
+    <script type="application/javascript" src="/bower_components/tinycolor/tinycolor.js"></script>
+
+
+</head>
+
+<body>
+
+  <div id="fingertitle">
+      <h1>Emotional Fingerprint
+      on <img src="/images/slack_monochrome_white.png"/></h1>
+      by <a href="http://twitter.com/svencharleer">@svencharleer</a>. For more details, check the <a href="">blog post</a> or <a href="">GitHub</a>.
+  </div>
+<div id="fingervis"></div>
+
+</body>
+<script type="application/javascript">
+    drawUser = function(user, userdata)
+    {
+        var sentimentsByHourOfWeek = userdata.dimension(function(f){
+            var date = new Date(f.datetime);
+            console.log("day" + date.getDay() + " hour" + date.getHours());
+            return date.getDay();
+        });
+
+        var sentimentByHourOfWeek = sentimentsByHourOfWeek.group().reduce(
+                function(p,v){
+                    if(p.polarities[Math.round(v.polarity)] == undefined)
+                        p.polarities[Math.round(v.polarity)] = 0;
+                    p.polarities[Math.round(v.polarity)]++;
+                    if(p.highestOccurance < p.polarities[Math.round(v.polarity)])
+                        p.highestOccurance = p.polarities[Math.round(v.polarity)]
+                    if(p.texts[Math.round(v.polarity)] == undefined)
+                        p.texts[Math.round(v.polarity)] = [];
+                    p.texts[Math.round(v.polarity)].push(v.text);
+                    //console.log(v.polarity);
+                    p.count++;return p;
+                },
+                function(p,v){
+                    p.count--;return p;},
+                function(){return {count:0, highestOccurance: 0,polarityTotal:0,polarities:{}, texts:{}};}
+
+
+        );
+        var sentiment_result = sentimentByHourOfWeek.top(Infinity);
+
+        var w = 60;
+        var h = 200;
+        var padding = 20;
+        var pw = 80;
+        var div = d3.select("#fingervis").append("div").attr("id",user).attr("class","user");
+        div.append("span").attr("class","username").text(user);
+        var svg = div
+                .append("svg")
+                .attr("width", w)   // <-- Here
+                .attr("height", h); // <-- and here!
+
+        var xScale = d3.scale.linear()
+                .domain([0, 7])
+                .range([0, 60]);
+
+        sentiment_result.forEach(function(p){
+
+                var pols = p.value.polarities;
+                var g = svg.append("g");
+                console.log(p);
+                var rect = g.selectAll("rect")
+                                .data(Object.keys(p.value.polarities))
+                        ;
+
+                rect.enter().append("rect")
+                        .attr("x",function(d,i){
+                            console.log(p.key);
+                            return xScale(p.key) ;
+                        })
+                        .attr("y",function(d,i){
+                            if(parseInt(d) > 0) {
+
+                                return -pols[d] * 5+100;
+                            }
+                            if(parseInt(d) < 0) {
+
+                                return pols[d] * 5+100;
+                            }
+                            return 100;
+                        })
+                        .attr("width",function(d){
+                            //if(d == 0) return .5;
+                            return 3;
+                        })
+                        .attr("height",function(d){
+                            //if(d == 0) return .5;
+                            return 3;
+                        })
+                        .attr("fill", function(d){
+                            var color = {};
+                            if(d>0)
+                                color = tinycolor("#D3F832").toHsv();
+                            else if(d<0)
+                                color = tinycolor("#FF7BA6").toHsv();
+                            else color = tinycolor("white").toHsv();
+
+                            var t = pols[d] /  p.value.highestOccurance;
+                            color.v = (t *1 + (1-t) *.25) * color.v;
+                            return tinycolor(color).toHexString();
+
+
+
+                        })
+                       ;
+
+
+
+
+
+
+
+        })
+
+
+
+    }
+
+    var crossfilters = {};
+    var data = <%- data %>;
+    Object.keys(data.data).forEach(function(d){
+        var sentiments = data.data[d].sentiment;
+        crossfilters[d] = crossfilter(sentiments);
+
+    });
+
+    Object.keys(crossfilters).forEach(function(x){
+        drawUser(x,crossfilters[x]);
+    })
+</script>
+
+</html>
