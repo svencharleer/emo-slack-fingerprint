@@ -1,6 +1,8 @@
 # emo-slack-fingerprint
 Emotional Fingerprint for Slack, a simple sentiment visualisation for Slack activity
 
+![Emotional Fingerprint screenshot](https://cdn-images-1.medium.com/max/800/1*ZiQiSODP4NwI-94qF_ymLQ.png)
+
 Before you begin, check out the following blog post:
 http://svencharleer.com/blog/2016/09/20/your-emotional-fingerprint-on-slack/
 
