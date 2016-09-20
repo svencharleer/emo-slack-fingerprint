@@ -2,7 +2,7 @@
 Emotional Fingerprint for Slack, a simple sentiment visualisation for Slack activity
 
 Before you begin, check out the following blog post:
-http://svencharleer.com/blog/2015/06/10/your-emotional-fingerprint-on-slack/ 
+http://svencharleer.com/blog/2016/09/20/your-emotional-fingerprint-on-slack/
 
 ## Run
 
